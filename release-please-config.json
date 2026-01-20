@@ -1,7 +1,7 @@
 {
     "packages": {
         ".": {
-            "release-type": "simple",
+            "release-type": "node",
             "include-v-in-tag": true,
             "include-component-in-tag": false,
             "changelog-path": "CHANGELOG.md",
@@ -12,15 +12,9 @@
                     "path": "ui/package.json",
                     "jsonpath": "$.version"
                 },
-                {
-                    "type": "simple",
-                    "path": "charts/cloud-sentinel-k8s/Chart.yaml"
-                },
-                {
-                    "type": "simple",
-                    "path": "charts/cloud-sentinel-k8s/values.yaml"
-                },
                 "README.md",
+                "charts/cloud-sentinel-k8s/Chart.yaml",
+                "charts/cloud-sentinel-k8s/values.yaml",
                 "charts/cloud-sentinel-k8s/README.md"
             ]
         }
