@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0](https://github.com/pixelvide/cloud-sentinel-k8s/compare/v0.1.0...v0.2.0) (2026-01-21)
+
+
+### Features
+
+* add Kubernetes icon SVG asset. ([01acd3f](https://github.com/pixelvide/cloud-sentinel-k8s/commit/01acd3fbaf3c3859cf9cdeeebb02f025fb7315c6))
+* Bump cloud-sentinel-k8s chart and app version to 0.1.0 and refine the release script's version syncing logic. ([b828948](https://github.com/pixelvide/cloud-sentinel-k8s/commit/b8289480d77a9d43cbd2592ec49abde8564918da))
+
 ## [0.1.0](https://github.com/pixelvide/cloud-sentinel-k8s/compare/v0.0.0...v0.1.0) (2026-01-21)
 
 
