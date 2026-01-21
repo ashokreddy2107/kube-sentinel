@@ -43,3 +43,6 @@ docs/.vitepress/cache
 
 cloud-sentinel-k8s
 !charts/cloud-sentinel-k8s
+
+# Environment variables
+.env
