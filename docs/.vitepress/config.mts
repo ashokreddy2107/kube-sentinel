@@ -96,7 +96,7 @@ export default defineConfig({
 
     footer: {
       message: "Released under the Apache License.",
-      copyright: "Copyright © 2025-present Cloud Sentinel K8s Contributors",
+      copyright: "Copyright © 2026-present Cloud Sentinel K8s Contributors",
     },
   },
 });
