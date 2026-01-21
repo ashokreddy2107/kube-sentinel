@@ -66,6 +66,11 @@ jobs:
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
+      - name: Run release script to update the versions
+        run: |
+          chmod +x scripts/release.sh
+          ./scripts/release.sh
+
       - name: Build
         run: make cross-compile
 
