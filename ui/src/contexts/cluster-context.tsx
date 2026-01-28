@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Cluster } from '@/types/api'
 import { withSubPath } from '@/lib/subpath'
 
+import { apiClient } from '@/lib/api-client'
 import { useAuth } from './auth-context'
 
 interface ClusterContextType {
@@ -134,6 +135,9 @@ export const ClusterProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem('current-cluster', clusterName)
       setStoredCluster(clusterName)
       document.cookie = `x-cluster-name=${clusterName}; path=/`
+
+      // Explicitly update API client provider to use the new cluster for pending requests (invalidation)
+      apiClient.setClusterProvider(() => clusterName)
 
       setTimeout(async () => {
         await queryClient.invalidateQueries({
