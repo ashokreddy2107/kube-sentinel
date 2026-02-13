@@ -1,9 +1,10 @@
 import './App.css'
 
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useSearchParams } from 'react-router-dom'
 
+import { Loader } from './components/ui/loader'
 import { AppSidebar } from './components/app-sidebar'
 import { GlobalSearch } from './components/global-search'
 import {
@@ -29,14 +30,7 @@ function ClusterAwareApp() {
   }, [currentCluster])
 
   if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
-          <span>{t('cluster.loading')}</span>
-        </div>
-      </div>
-    )
+    return <Loader message={t('cluster.loading')} />
   }
 
   if (error) {
@@ -58,7 +52,11 @@ function AppContent() {
   const isIframe = searchParams.get('iframe') === 'true'
 
   if (isIframe) {
-    return <Outlet />
+    return (
+      <Suspense fallback={<Loader />}>
+        <Outlet />
+      </Suspense>
+    )
   }
 
   return (
@@ -70,7 +68,9 @@ function AppContent() {
           <div className="@container/main">
             <div className="flex flex-col gap-4 py-4 md:gap-6">
               <div className="px-4 lg:px-6">
-                <Outlet />
+                <Suspense fallback={<Loader />}>
+                  <Outlet />
+                </Suspense>
               </div>
             </div>
           </div>

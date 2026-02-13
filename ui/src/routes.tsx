@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import App from './App'
@@ -7,17 +8,56 @@ import {
   ClusterRedirector,
   RootRedirector,
 } from './components/route-redirectors'
+import { Loader } from './components/ui/loader'
 import { getSubPath } from './lib/subpath'
-import { CRListPage } from './pages/cr-list-page'
-import { HelmChartListPage } from './pages/helm-chart-list-page'
-import { HelmReleaseListPage } from './pages/helm-release-list-page'
-import { InitializationPage } from './pages/initialization'
-import { LoginPage } from './pages/login'
-import { Overview } from './pages/overview'
-import { ResourceDetail } from './pages/resource-detail'
-import { ResourceList } from './pages/resource-list'
-import { SettingsPage } from './pages/settings'
-import { SecurityDashboard } from './pages/security-dashboard'
+
+// Lazy load page components
+const InitializationPage = lazy(() =>
+  import('./pages/initialization').then((module) => ({
+    default: module.InitializationPage,
+  }))
+)
+const LoginPage = lazy(() =>
+  import('./pages/login').then((module) => ({ default: module.LoginPage }))
+)
+const Overview = lazy(() =>
+  import('./pages/overview').then((module) => ({ default: module.Overview }))
+)
+const SecurityDashboard = lazy(() =>
+  import('./pages/security-dashboard').then((module) => ({
+    default: module.SecurityDashboard,
+  }))
+)
+const HelmReleaseListPage = lazy(() =>
+  import('./pages/helm-release-list-page').then((module) => ({
+    default: module.HelmReleaseListPage,
+  }))
+)
+const HelmChartListPage = lazy(() =>
+  import('./pages/helm-chart-list-page').then((module) => ({
+    default: module.HelmChartListPage,
+  }))
+)
+const CRListPage = lazy(() =>
+  import('./pages/cr-list-page').then((module) => ({
+    default: module.CRListPage,
+  }))
+)
+const ResourceDetail = lazy(() =>
+  import('./pages/resource-detail').then((module) => ({
+    default: module.ResourceDetail,
+  }))
+)
+const ResourceList = lazy(() =>
+  import('./pages/resource-list').then((module) => ({
+    default: module.ResourceList,
+  }))
+)
+const SettingsPage = lazy(() =>
+  import('./pages/settings').then((module) => ({
+    default: module.SettingsPage,
+  }))
+)
 
 const subPath = getSubPath()
 
@@ -25,13 +65,19 @@ export const router = createBrowserRouter(
   [
     {
       path: '/setup',
-      element: <InitializationPage />,
+      element: (
+        <Suspense fallback={<Loader />}>
+          <InitializationPage />
+        </Suspense>
+      ),
     },
     {
       path: '/login',
       element: (
         <InitCheckRoute>
-          <LoginPage />
+          <Suspense fallback={<Loader />}>
+            <LoginPage />
+          </Suspense>
         </InitCheckRoute>
       ),
     },
