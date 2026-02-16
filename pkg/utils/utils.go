@@ -48,6 +48,8 @@ func InjectKubeSentinelBase(htmlContent string, base string) string {
 	return re.ReplaceAllString(htmlContent, "<head>\n    "+baseScript)
 }
 
+// RandomString generates a random string of the given length.
+// NOTE: This is NOT cryptographically secure. Use GenerateSecureToken for secrets.
 func RandomString(length int) string {
 	return rand.String(length)
 }

@@ -348,7 +348,11 @@ func AddSuperUser(user *User) error {
 }
 
 func NewPersonalAccessToken(userID uint, name string, expiresAt *time.Time) (string, *PersonalAccessToken, error) {
-	token := "cspat-" + utils.RandomString(32)
+	randomStr, err := utils.GenerateSecureToken(32)
+	if err != nil {
+		return "", nil, err
+	}
+	token := "cspat-" + randomStr
 	digest := utils.SHA256Hash(token)
 	pat := &PersonalAccessToken{
 		UserID:      userID,

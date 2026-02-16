@@ -15,3 +15,19 @@ func TestEncryptDecryptString(t *testing.T) {
 		t.Errorf("DecryptString() = %q, want %q", decrypted, original)
 	}
 }
+
+func TestGenerateSecureToken(t *testing.T) {
+	lengths := []int{16, 32, 64}
+	for _, length := range lengths {
+		token, err := GenerateSecureToken(length)
+		if err != nil {
+			t.Fatalf("GenerateSecureToken(%d) failed: %v", length, err)
+		}
+		if len(token) != length {
+			t.Errorf("GenerateSecureToken(%d) length = %d, want %d", length, len(token), length)
+		}
+		if token == "" {
+			t.Errorf("GenerateSecureToken(%d) returned empty string", length)
+		}
+	}
+}
