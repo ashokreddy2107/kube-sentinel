@@ -49,7 +49,7 @@ func InjectKubeSentinelBase(htmlContent string, base string) string {
 }
 
 // RandomString generates a random string of the given length.
-// NOTE: This is NOT cryptographically secure. Use GenerateSecureToken for secrets.
+// NOTE: This is NOT cryptographically secure and should not be used for secrets. Use GenerateSecureToken instead.
 func RandomString(length int) string {
 	return rand.String(length)
 }
