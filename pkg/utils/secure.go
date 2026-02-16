@@ -73,3 +73,11 @@ func SHA256Hash(input string) string {
 	hash := sha256.Sum256([]byte(input))
 	return fmt.Sprintf("%x", hash)
 }
+
+func GenerateSecureToken(length int) (string, error) {
+	b := make([]byte, length)
+	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+		return "", fmt.Errorf("failed to generate secure token: %w", err)
+	}
+	return base64.RawURLEncoding.EncodeToString(b)[:length], nil
+}
