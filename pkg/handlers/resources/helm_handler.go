@@ -10,6 +10,7 @@ import (
 	"github.com/pixelvide/kube-sentinel/pkg/common"
 	"github.com/pixelvide/kube-sentinel/pkg/helm"
 	v3 "github.com/pixelvide/kube-sentinel/pkg/helm/types/v3"
+	"helm.sh/helm/v3/pkg/release"
 	"sigs.k8s.io/yaml"
 )
 
@@ -53,6 +54,10 @@ func (h *HelmHandler) List(c *gin.Context) {
 			if !found {
 				continue
 			}
+		}
+
+		if r.Info.Status == release.StatusSuperseded {
+			continue
 		}
 
 		items = append(items, v3.HelmRelease{
