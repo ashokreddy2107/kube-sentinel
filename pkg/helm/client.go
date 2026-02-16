@@ -3,6 +3,7 @@ package helm
 import (
 	"log"
 	"os"
+	"sort"
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/release"
@@ -66,23 +67,38 @@ func ListReleases(config *rest.Config, namespace string) ([]*release.Release, er
 		return nil, err
 	}
 
-	client := action.NewList(actionConfig)
-	client.Deployed = true
-	client.Failed = true
-	client.Pending = true
-	client.Uninstalling = true
-	client.Uninstalled = true
 
-	if namespace == "" || namespace == "_all" {
-		client.AllNamespaces = true
+	runList := func() ([]*release.Release, error) {
+		// List all releases from storage without any filter
+		releases, err := actionConfig.Releases.List(func(r *release.Release) bool { return true })
+		if err != nil {
+			return nil, err
+		}
+
+		// Group by name and find latest version
+		latestReleases := make(map[string]*release.Release)
+		for _, r := range releases {
+			current, exists := latestReleases[r.Name]
+			if !exists || r.Version > current.Version {
+				latestReleases[r.Name] = r
+			}
+		}
+
+		// Convert map to slice
+		results := make([]*release.Release, 0, len(latestReleases))
+		for _, r := range latestReleases {
+			results = append(results, r)
+		}
+
+		// Sort by name
+		sort.Slice(results, func(i, j int) bool {
+			return results[i].Name < results[j].Name
+		})
+
+		return results, nil
 	}
 
-	results, err := client.Run()
-	if err != nil {
-		return nil, err
-	}
-
-	return results, nil
+	return runList()
 }
 
 func UninstallRelease(config *rest.Config, namespace, releaseName string) error {
