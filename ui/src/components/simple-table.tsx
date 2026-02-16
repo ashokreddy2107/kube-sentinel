@@ -165,12 +165,17 @@ export function SimpleTable<T>({
             </div>
           )}
 
-          <div className="flex items-center space-x-2">
+          <nav
+            role="navigation"
+            aria-label="Pagination"
+            className="flex items-center space-x-2"
+          >
             <Button
               variant="outline"
               size="sm"
               onClick={handlePreviousPage}
               disabled={currentPage === 1}
+              aria-label="Go to previous page"
             >
               Previous
             </Button>
@@ -199,6 +204,8 @@ export function SimpleTable<T>({
                         size="sm"
                         onClick={() => handlePageChange(page)}
                         className="min-w-[32px]"
+                        aria-label={`Go to page ${page}`}
+                        aria-current={currentPage === page ? 'page' : undefined}
                       >
                         {page}
                       </Button>
@@ -212,10 +219,11 @@ export function SimpleTable<T>({
               size="sm"
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
+              aria-label="Go to next page"
             >
               Next
             </Button>
-          </div>
+          </nav>
         </div>
       )}
     </div>
