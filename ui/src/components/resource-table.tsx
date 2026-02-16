@@ -29,6 +29,7 @@ import { toast } from 'sonner'
 import { ResourceType } from '@/types/api'
 import { deleteResource, useResources, useResourcesWatch } from '@/lib/api'
 import { useCluster } from '@/hooks/use-cluster'
+import { useDebounce } from '@/hooks/use-debounce'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -58,6 +59,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 import { ConnectionIndicator } from './connection-indicator'
 import { ErrorMessage } from './error-message'
@@ -113,6 +119,8 @@ export function ResourceTable<T>({
     const storageKey = `${currentCluster}-${resourceName}-searchQuery`
     return sessionStorage.getItem(storageKey) || ''
   })
+
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
@@ -195,12 +203,12 @@ export function ResourceTable<T>({
   useEffect(() => {
     const currentCluster = localStorage.getItem('current-cluster')
     const storageKey = `${currentCluster}-${resourceName}-searchQuery`
-    if (searchQuery) {
-      sessionStorage.setItem(storageKey, searchQuery)
+    if (debouncedSearchQuery) {
+      sessionStorage.setItem(storageKey, debouncedSearchQuery)
     } else {
       sessionStorage.removeItem(storageKey)
     }
-  }, [searchQuery, resourceName])
+  }, [debouncedSearchQuery, resourceName])
 
   // Update sessionStorage when column visibility changes
   useEffect(() => {
@@ -230,7 +238,7 @@ export function ResourceTable<T>({
   // Reset pagination when filters change
   useEffect(() => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-  }, [columnFilters, searchQuery])
+  }, [columnFilters, debouncedSearchQuery])
 
   // Handle namespace change
   const handleNamespaceChange = useCallback(
@@ -346,7 +354,11 @@ export function ResourceTable<T>({
     : useSSE
       ? (watchError as Error | null)
       : (queryError as unknown as Error | null)
-  const refetch = externalData ? () => {} : useSSE ? reconnectSSE : queryRefetch
+  const refetch = useMemo(() => {
+    if (externalData) return () => {}
+    if (useSSE) return reconnectSSE
+    return queryRefetch
+  }, [externalData, useSSE, reconnectSSE, queryRefetch])
 
   const memoizedData = useMemo(() => (data || []) as T[], [data])
 
@@ -398,7 +410,7 @@ export function ResourceTable<T>({
     state: {
       sorting,
       columnFilters,
-      globalFilter: searchQuery,
+      globalFilter: debouncedSearchQuery,
       pagination,
       rowSelection,
       columnVisibility,
@@ -489,15 +501,15 @@ export function ResourceTable<T>({
   const filteredRowCount = useMemo(() => {
     if (!data || (data as T[]).length === 0) return 0
     // Force re-computation when filters change
-    void searchQuery // Ensure dependency is used
+    void debouncedSearchQuery // Ensure dependency is used
     void columnFilters // Ensure dependency is used
     return table.getFilteredRowModel().rows.length
-  }, [table, data, searchQuery, columnFilters])
+  }, [table, data, debouncedSearchQuery, columnFilters])
 
   // Check if there are active filters
   const hasActiveFilters = useMemo(() => {
-    return Boolean(searchQuery) || columnFilters.length > 0
-  }, [searchQuery, columnFilters])
+    return Boolean(debouncedSearchQuery) || columnFilters.length > 0
+  }, [debouncedSearchQuery, columnFilters])
 
   // Render empty state based on condition
   const renderEmptyState = () => {
@@ -541,13 +553,13 @@ export function ResourceTable<T>({
             No {resourceName.toLowerCase()} found
           </h3>
           <p className="text-muted-foreground">
-            {searchQuery
-              ? `No results match your search query: "${searchQuery}"`
+            {debouncedSearchQuery
+              ? `No results match your search query: "${debouncedSearchQuery}"`
               : clusterScope
                 ? `There are no ${resourceName.toLowerCase()} found`
                 : `There are no ${resourceName.toLowerCase()} ${selectedNamespace === '_all' ? 'in All Namespaces' : `in the ${selectedNamespace} namespace`}`}
           </p>
-          {searchQuery && (
+          {debouncedSearchQuery && (
             <Button
               variant="outline"
               className="mt-4"
@@ -718,6 +730,7 @@ export function ResourceTable<T>({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 pr-4 w-full sm:w-[100px] md:w-[200px]"
+                  aria-label={t('common.search')}
                 />
               </div>
               {searchQuery && (
@@ -754,13 +767,27 @@ export function ResourceTable<T>({
 
           {/* Toggle columns Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="h-9 w-9">
-                <Settings2 className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9"
+                    aria-label={t('resourceTable.toggleColumns')}
+                  >
+                    <Settings2 className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t('resourceTable.toggleColumns')}
+              </TooltipContent>
+            </Tooltip>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                {t('resourceTable.toggleColumns')}
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {table
                 .getAllLeafColumns()
@@ -796,7 +823,7 @@ export function ResourceTable<T>({
         hasActiveFilters={hasActiveFilters}
         filteredRowCount={filteredRowCount}
         totalRowCount={totalRowCount}
-        searchQuery={searchQuery}
+        searchQuery={debouncedSearchQuery}
         pagination={pagination}
         setPagination={setPagination}
         disablePagination={disablePagination}

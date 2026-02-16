@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/common"
+	"github.com/pixelvide/kube-sentinel/pkg/common"
 	"k8s.io/klog/v2"
 )
 
@@ -12,6 +12,10 @@ type App struct {
 	Model
 	Name    string `gorm:"uniqueIndex;not null" json:"name"`
 	Enabled bool   `gorm:"default:true" json:"enabled"`
+}
+
+func (App) TableName() string {
+	return common.GetCoreTableName("apps")
 }
 
 type AppConfig struct {
@@ -24,6 +28,10 @@ type AppConfig struct {
 	App App `gorm:"foreignKey:AppID" json:"app,omitempty"`
 }
 
+func (AppConfig) TableName() string {
+	return common.GetCoreTableName("app_configs")
+}
+
 type AppUser struct {
 	Model
 	AppID  uint `gorm:"uniqueIndex:idx_app_user;not null" json:"app_id"`
@@ -33,6 +41,10 @@ type AppUser struct {
 	// Relationships
 	User User `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	App  App  `gorm:"foreignKey:AppID" json:"app,omitempty"`
+}
+
+func (AppUser) TableName() string {
+	return common.GetCoreTableName("app_users")
 }
 
 const (

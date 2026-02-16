@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/model"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/rbac"
+	"github.com/pixelvide/kube-sentinel/pkg/model"
+	"github.com/pixelvide/kube-sentinel/pkg/rbac"
 	"k8s.io/klog/v2"
 )
 
@@ -245,8 +245,16 @@ func UpdateSidebarPreference(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	user.SidebarPreference = req.SidebarPreference
-	if err := model.UpdateUser(&user); err != nil {
+
+	config, err := model.GetUserConfig(user.ID)
+	if err != nil {
+		klog.Errorf("failed to get user config for user %s: %v", user.Username, err)
+		c.JSON(500, gin.H{"error": "failed to get user config"})
+		return
+	}
+
+	config.SidebarPreference = req.SidebarPreference
+	if err := model.DB.Save(config).Error; err != nil {
 		klog.Errorf("failed to update sidebar preference for user %s: %v", user.Username, err)
 		c.JSON(500, gin.H{"error": "failed to update sidebar preference"})
 		return

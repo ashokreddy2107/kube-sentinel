@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/model"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/rbac"
+	"github.com/pixelvide/kube-sentinel/pkg/model"
+	"github.com/pixelvide/kube-sentinel/pkg/rbac"
 )
 
 // --- Profiles ---
@@ -24,7 +24,7 @@ func ListAIProfiles(c *gin.Context) {
 	if !isAdmin {
 		for i := range profiles {
 			if profiles[i].APIKey != "" {
-				profiles[i].APIKey = "***"
+				profiles[i].APIKey = model.SecretString("***")
 			}
 		}
 	}
@@ -125,7 +125,7 @@ func GetAdminAIConfig(c *gin.Context) {
 	isAdmin := user != nil && rbac.UserHasRole(*user, model.DefaultAdminRole.Name)
 
 	if !isAdmin && profile.APIKey != "" {
-		profile.APIKey = "***"
+		profile.APIKey = model.SecretString("***")
 	}
 
 	c.JSON(http.StatusOK, gin.H{

@@ -12,7 +12,7 @@ func TestGetImageRegistryAndRepo(t *testing.T) {
 	}{
 		{"nginx", "", "library/nginx"},
 		{"nginx:latest", "", "library/nginx"},
-		{"pixelvide/cloud-sentinel-k8s:latest", "", "pixelvide/cloud-sentinel-k8s"},
+		{"pixelvide/kube-sentinel:latest", "", "pixelvide/kube-sentinel"},
 		{"docker.io/library/nginx", "docker.io", "library/nginx"},
 		{"docker.io/library/nginx:latest", "docker.io", "library/nginx"},
 		{"gcr.io/my-project/my-image", "gcr.io", "my-project/my-image"},
@@ -25,6 +25,35 @@ func TestGetImageRegistryAndRepo(t *testing.T) {
 		registry, repo := GetImageRegistryAndRepo(tc.image)
 		if registry != tc.registry || repo != tc.repo {
 			t.Errorf("GetImageRegistryAndRepo(%q) = (%q, %q), want (%q, %q)", tc.image, registry, repo, tc.registry, tc.repo)
+		}
+	}
+}
+
+func TestIsSecureRegistry(t *testing.T) {
+	testcases := []struct {
+		host      string
+		shouldErr bool
+	}{
+		{"docker.io", false},
+		{"quay.io", false},
+		{"gcr.io", false},
+		{"localhost", true},
+		{"localhost:5000", true},
+		{"127.0.0.1", true},
+		{"127.0.0.1:5000", true},
+		{"[::1]", true},
+		{"[::1]:5000", true},
+		{"google.com", false},
+		{"0.0.0.0", true},
+	}
+
+	for _, tc := range testcases {
+		err := IsSecureRegistry(tc.host)
+		if tc.shouldErr && err == nil {
+			t.Errorf("IsSecureRegistry(%q) should have failed but passed", tc.host)
+		}
+		if !tc.shouldErr && err != nil {
+			t.Errorf("IsSecureRegistry(%q) failed: %v", tc.host, err)
 		}
 	}
 }

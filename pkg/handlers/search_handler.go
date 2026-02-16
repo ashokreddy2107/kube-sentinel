@@ -6,13 +6,14 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hashicorp/golang-lru/v2/expirable"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/common"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/handlers/resources"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/utils"
+	"github.com/pixelvide/kube-sentinel/pkg/common"
+	"github.com/pixelvide/kube-sentinel/pkg/handlers/resources"
+	"github.com/pixelvide/kube-sentinel/pkg/utils"
 )
 
 type SearchHandler struct {
@@ -35,19 +36,29 @@ func (h *SearchHandler) createCacheKey(query string) string {
 
 func (h *SearchHandler) Search(c *gin.Context, query string, limit int) ([]common.SearchResult, error) {
 	var allResults []common.SearchResult
+	var mu sync.Mutex
+	var wg sync.WaitGroup
 
 	// Search in different resource types
 	searchFuncs := resources.SearchFuncs
 	guessSearchResources, q := utils.GuessSearchResources(query)
 	for name, searchFunc := range searchFuncs {
 		if guessSearchResources == "all" || name == guessSearchResources {
-			results, err := searchFunc(c, q, int64(limit))
-			if err != nil {
-				continue
-			}
-			allResults = append(allResults, results...)
+			wg.Add(1)
+			go func(searchFunc func(c *gin.Context, query string, limit int64) ([]common.SearchResult, error)) {
+				defer wg.Done()
+				// We wait for all goroutines to finish before returning, so using c is safe for read-only operations
+				results, err := searchFunc(c, q, int64(limit))
+				if err != nil {
+					return
+				}
+				mu.Lock()
+				allResults = append(allResults, results...)
+				mu.Unlock()
+			}(searchFunc)
 		}
 	}
+	wg.Wait()
 
 	queryLower := strings.ToLower(q)
 	sortResults(allResults, queryLower)

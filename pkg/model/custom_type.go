@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/utils"
+	"github.com/pixelvide/kube-sentinel/pkg/utils"
 )
 
 type SecretString string
@@ -34,7 +34,9 @@ func (s *SecretString) Scan(value interface{}) error {
 	// Decrypt the string
 	decrypted, err := utils.DecryptString(encryptedStr)
 	if err != nil {
-		return fmt.Errorf("failed to decrypt SecretString: %w", err)
+		// Treat as plaintext if decryption fails
+		*s = SecretString(encryptedStr)
+		return nil //nolint:nilerr // Lazy migration: fall back to plaintext if decryption fails
 	}
 	*s = SecretString(decrypted)
 	return nil
@@ -86,8 +88,16 @@ func (s *SliceString) Scan(value interface{}) error {
 	var strArray []string
 	switch v := value.(type) {
 	case string:
+		if v == "" {
+			*s = []string{}
+			return nil
+		}
 		strArray = strings.Split(v, ",")
 	case []byte:
+		if len(v) == 0 {
+			*s = []string{}
+			return nil
+		}
 		strArray = strings.Split(string(v), ",")
 	default:
 		return fmt.Errorf("cannot scan %T into SliceString", value)

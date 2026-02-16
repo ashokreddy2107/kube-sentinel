@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/pixelvide/kube-sentinel/pkg/common"
 	"gorm.io/gorm"
 )
 
@@ -14,14 +15,15 @@ type UserConfig struct {
 	StorageNamespace string `json:"storage_namespace" gorm:"uniqueIndex;not null"`
 
 	// Settings
-	IsAIChatEnabled bool `json:"is_ai_chat_enabled" gorm:"default:true"`
+	IsAIChatEnabled   bool   `json:"is_ai_chat_enabled" gorm:"default:true"`
+	SidebarPreference string `json:"sidebar_preference,omitempty" gorm:"type:text"`
 
 	// Relationships
 	User User `json:"-" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 func (UserConfig) TableName() string {
-	return "user_configs"
+	return common.GetAppTableName("user_configs")
 }
 
 func (u *UserConfig) BeforeCreate(tx *gorm.DB) (err error) {

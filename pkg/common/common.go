@@ -1,6 +1,8 @@
 package common
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"os"
 	"strings"
 	"time"
@@ -9,11 +11,11 @@ import (
 )
 
 const (
-	AppName = "cloud-sentinel-k8s"
+	AppName = "kube-sentinel"
 
 	JWTExpirationSeconds = 24 * 60 * 60 // 24 hours
 
-	NodeTerminalPodName = "cloud-sentinel-k8s-node-terminal-agent"
+	NodeTerminalPodName = "kube-sentinel-node-terminal-agent"
 
 	KubectlAnnotation = "kubectl.kubernetes.io/last-applied-configuration"
 
@@ -25,7 +27,7 @@ const (
 
 var (
 	Port        = "8080"
-	JwtSecret   = "cloud-sentinel-k8s-default-jwt-secret-key-change-in-production"
+	JwtSecret   = ""
 	Host        = ""
 	Base        = ""
 	GitlabHosts = ""
@@ -33,8 +35,10 @@ var (
 	NodeTerminalImage = "busybox:latest"
 	DBType            = "sqlite"
 	DBDSN             = "dev.db"
+	DBSchemaCore      = "public"
+	DBSchemaApp       = "public"
 
-	CloudSentinelK8sEncryptKey = "cloud-sentinel-k8s-default-encryption-key-change-in-production"
+	KubeSentinelEncryptKey = "kube-sentinel-default-encryption-key-change-in-production"
 
 	CookieExpirationSeconds = 2 * JWTExpirationSeconds // double jwt
 
@@ -43,11 +47,37 @@ var (
 	InsecureSkipVerify  = false
 
 	APIKeyProvider = "api_key"
+
+	AllowedOrigins []string
 )
+
+func GetTableName(schema, baseName string) string {
+	if DBType == "postgres" && schema != "public" {
+		return schema + "." + baseName
+	}
+	return baseName
+}
+
+func GetAppTableName(baseName string) string {
+	return GetTableName(DBSchemaApp, baseName)
+}
+
+func GetCoreTableName(baseName string) string {
+	return GetTableName(DBSchemaCore, baseName)
+}
 
 func LoadEnvs() {
 	if secret := os.Getenv("JWT_SECRET"); secret != "" {
 		JwtSecret = secret
+	} else {
+		// Generate random secret if not provided to avoid hardcoded secrets
+		b := make([]byte, 32)
+		_, err := rand.Read(b)
+		if err != nil {
+			klog.Fatalf("Failed to generate random JWT secret: %v", err)
+		}
+		JwtSecret = base64.StdEncoding.EncodeToString(b)
+		klog.Warning("JWT_SECRET is not set, using a randomly generated secret. Sessions will be invalidated on restart.")
 	}
 
 	if port := os.Getenv("PORT"); port != "" {
@@ -69,10 +99,18 @@ func LoadEnvs() {
 		DBType = dbType
 	}
 
-	if key := os.Getenv("CLOUD_SENTINEL_K8S_ENCRYPT_KEY"); key != "" {
-		CloudSentinelK8sEncryptKey = key
+	if schema := os.Getenv("DB_SCHEMA_CORE"); schema != "" {
+		DBSchemaCore = schema
+	}
+
+	if schema := os.Getenv("DB_SCHEMA_APP"); schema != "" {
+		DBSchemaApp = schema
+	}
+
+	if key := os.Getenv("KUBE_SENTINEL_ENCRYPT_KEY"); key != "" {
+		KubeSentinelEncryptKey = key
 	} else {
-		klog.Warningf("CLOUD_SENTINEL_K8S_ENCRYPT_KEY is not set, using default key, this is not secure for production!")
+		klog.Warningf("KUBE_SENTINEL_ENCRYPT_KEY is not set, using default key, this is not secure for production!")
 	}
 
 	if v := os.Getenv("HOST"); v != "" {
@@ -86,7 +124,7 @@ func LoadEnvs() {
 		DisableVersionCheck = true
 	}
 
-	if v := os.Getenv("CLOUD_SENTINEL_K8S_BASE"); v != "" {
+	if v := os.Getenv("KUBE_SENTINEL_BASE"); v != "" {
 		if v[0] != '/' {
 			v = "/" + v
 		}
@@ -101,5 +139,13 @@ func LoadEnvs() {
 	if v := os.Getenv("INSECURE_SKIP_VERIFY"); v == "true" {
 		InsecureSkipVerify = true
 		klog.Warning("INSECURE_SKIP_VERIFY is set to true, SSL certificate verification will be skipped")
+	}
+
+	if v := os.Getenv("ALLOWED_ORIGINS"); v != "" {
+		AllowedOrigins = strings.Split(v, ",")
+		for i := range AllowedOrigins {
+			AllowedOrigins[i] = strings.TrimSpace(AllowedOrigins[i])
+		}
+		klog.Infof("CORS Allowed Origins: %v", AllowedOrigins)
 	}
 }

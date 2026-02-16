@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/glebarez/sqlite"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/common"
+	"github.com/pixelvide/kube-sentinel/pkg/common"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -76,6 +76,16 @@ func InitDB() {
 			DB, err = gorm.Open(postgres.Open(dsn), cfg)
 			if err != nil {
 				panic("failed to connect database: " + err.Error())
+			}
+			if common.DBSchemaCore != "public" {
+				if err := DB.Exec("CREATE SCHEMA IF NOT EXISTS " + common.DBSchemaCore).Error; err != nil {
+					panic("failed to create schema: " + err.Error())
+				}
+			}
+			if common.DBSchemaApp != "public" && common.DBSchemaApp != common.DBSchemaCore {
+				if err := DB.Exec("CREATE SCHEMA IF NOT EXISTS " + common.DBSchemaApp).Error; err != nil {
+					panic("failed to create schema: " + err.Error())
+				}
 			}
 		}
 	})

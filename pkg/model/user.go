@@ -5,27 +5,38 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/common"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/utils"
+	"github.com/pixelvide/kube-sentinel/pkg/common"
+	"github.com/pixelvide/kube-sentinel/pkg/utils"
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 )
 
 type User struct {
 	Model
-	Username    string      `json:"username" gorm:"type:varchar(50);uniqueIndex;not null"`
-	Password    string      `json:"-" gorm:"type:varchar(255)"`
-	Name        string      `json:"name,omitempty" gorm:"type:varchar(100);index"`
-	AvatarURL   string      `json:"avatar_url,omitempty" gorm:"type:varchar(500)"`
-	Provider    string      `json:"provider,omitempty" gorm:"-"`
-	OIDCGroups  SliceString `json:"oidc_groups,omitempty" gorm:"-"`
-	LastLoginAt *time.Time  `json:"lastLoginAt,omitempty" gorm:"type:timestamp;index"`
-	Enabled     bool        `json:"enabled" gorm:"type:boolean;default:true"`
-	Sub         string      `json:"sub,omitempty" gorm:"-"`
+	Username    string     `json:"username" gorm:"type:varchar(50);uniqueIndex;not null"`
+	Password    string     `json:"-" gorm:"type:varchar(255)"`
+	Name        string     `json:"name,omitempty" gorm:"type:varchar(100);index"`
+	Email       string     `json:"email,omitempty" gorm:"type:varchar(255);index"`
+	AvatarURL   string     `json:"avatar_url,omitempty" gorm:"type:varchar(500)"`
+	LastLoginAt *time.Time `json:"lastLoginAt,omitempty" gorm:"type:timestamp;index"`
+	Enabled     bool       `json:"enabled" gorm:"type:boolean;default:true"`
 
-	Roles             []common.Role `json:"roles,omitempty" gorm:"-"`
-	SidebarPreference string        `json:"sidebar_preference,omitempty" gorm:"type:text"`
-	Config            *UserConfig   `json:"config,omitempty" gorm:"foreignKey:UserID"`
+	// Transient fields (OIDC/Authentication)
+	// Provider is a transient field used during OIDC authentication to pass the provider name.
+	Provider string `json:"provider,omitempty" gorm:"-"`
+	// OIDCGroups is a transient field used during OIDC authentication to pass group claims.
+	// These groups are used for RBAC role mapping.
+	OIDCGroups SliceString `json:"oidc_groups,omitempty" gorm:"-"`
+	// Sub is a transient field used during OIDC authentication to pass the subject identifier.
+	Sub string `json:"sub,omitempty" gorm:"-"`
+
+	// Relations
+	Roles  []common.Role `json:"roles,omitempty" gorm:"-"`
+	Config *UserConfig   `json:"config,omitempty" gorm:"foreignKey:UserID"`
+}
+
+func (User) TableName() string {
+	return common.GetCoreTableName("users")
 }
 
 type PersonalAccessToken struct {
@@ -42,6 +53,10 @@ type PersonalAccessToken struct {
 	User User `json:"user" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
+func (PersonalAccessToken) TableName() string {
+	return common.GetAppTableName("personal_access_tokens")
+}
+
 type UserIdentity struct {
 	Model
 	UserID      uint        `json:"user_id" gorm:"index;not null;uniqueIndex:idx_user_provider"`
@@ -52,6 +67,10 @@ type UserIdentity struct {
 
 	// Relationships
 	User User `json:"user" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+}
+
+func (UserIdentity) TableName() string {
+	return common.GetAppTableName("user_identities")
 }
 
 func (u *User) Key() string {
@@ -100,6 +119,7 @@ func FindWithSubOrUpsertUser(user *User) error {
 		return errors.New("user sub is empty")
 	}
 	inputOIDCGroups := user.OIDCGroups
+	inputEmail := user.Email
 
 	var identity UserIdentity
 	// Try to find identity first
@@ -117,6 +137,11 @@ func FindWithSubOrUpsertUser(user *User) error {
 		now := time.Now()
 		user.LastLoginAt = &now
 		identity.LastLoginAt = &now
+
+		// Update Email if provided and not already set
+		if inputEmail != "" && user.Email == "" {
+			user.Email = inputEmail
+		}
 
 		// Update OIDC groups on identity if changed
 		if fmt.Sprintf("%v", identity.OIDCGroups) != fmt.Sprintf("%v", inputOIDCGroups) {
@@ -168,6 +193,9 @@ func FindWithSubOrUpsertUser(user *User) error {
 	if existingUser.ID != 0 {
 		now := time.Now()
 		existingUser.LastLoginAt = &now
+		if inputEmail != "" && existingUser.Email == "" {
+			existingUser.Email = inputEmail
+		}
 		if err := DB.Save(&existingUser).Error; err != nil {
 			klog.Errorf("Failed to update existing user: %v", err)
 			return err

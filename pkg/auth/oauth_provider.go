@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/common"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/model"
+	"github.com/pixelvide/kube-sentinel/pkg/common"
+	"github.com/pixelvide/kube-sentinel/pkg/model"
 	"k8s.io/klog/v2"
 )
 
@@ -49,10 +49,11 @@ type TokenResponse struct {
 
 // Claims represents JWT claims with refresh token support
 type Claims struct {
-	UserID       uint   `json:"user_id"`
-	Username     string `json:"username"`
-	Provider     string `json:"provider"`
-	RefreshToken string `json:"refresh_token,omitempty"`
+	UserID       uint     `json:"user_id"`
+	Username     string   `json:"username"`
+	Provider     string   `json:"provider"`
+	RefreshToken string   `json:"refresh_token,omitempty"`
+	OIDCGroups   []string `json:"oidc_groups,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -286,6 +287,11 @@ func (g *GenericProvider) GetUserInfo(accessToken string) (*model.User, error) {
 	} else if email, ok := userInfo["email"]; ok {
 		user.Username = fmt.Sprintf("%v", email)
 	}
+
+	if email, ok := userInfo["email"]; ok {
+		user.Email = fmt.Sprintf("%v", email)
+	}
+
 	if name, ok := userInfo["name"]; ok {
 		user.Name = fmt.Sprintf("%v", name)
 	} else if displayName, ok := userInfo["displayName"]; ok {

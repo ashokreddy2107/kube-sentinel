@@ -10,10 +10,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/ai"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/ai/tools"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/cluster"
-	"github.com/pixelvide/cloud-sentinel-k8s/pkg/model"
+	"github.com/pixelvide/kube-sentinel/pkg/ai"
+	"github.com/pixelvide/kube-sentinel/pkg/ai/tools"
+	"github.com/pixelvide/kube-sentinel/pkg/cluster"
+	"github.com/pixelvide/kube-sentinel/pkg/model"
 	openai "github.com/sashabaranov/go-openai"
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
@@ -110,7 +110,7 @@ func resolveAIConfig(user *model.User) (*ai.AIConfig, error) {
 
 			resolvedConfig = &ai.AIConfig{
 				Provider:     profile.Provider,
-				APIKey:       userSettings.APIKey,
+				APIKey:       string(userSettings.APIKey),
 				BaseURL:      profile.BaseURL,
 				Model:        modelOverride,
 				DefaultModel: profile.DefaultModel,
@@ -124,7 +124,7 @@ func resolveAIConfig(user *model.User) (*ai.AIConfig, error) {
 		if err := model.DB.Where("is_system = ? AND is_enabled = ?", true, true).First(&profile).Error; err == nil {
 			resolvedConfig = &ai.AIConfig{
 				Provider:     profile.Provider,
-				APIKey:       profile.APIKey,
+				APIKey:       string(profile.APIKey),
 				BaseURL:      profile.BaseURL,
 				Model:        profile.DefaultModel,
 				DefaultModel: profile.DefaultModel,
@@ -210,7 +210,7 @@ func getOrCreateSession(sessionID string, userID uint) (*model.AIChatSession, er
 func buildMessageHistory(session model.AIChatSession, userMessage string, chatCtx ChatContext, clusterName string, clusterID uint) []openai.ChatCompletionMessage {
 	var messages []openai.ChatCompletionMessage
 
-	systemPrompt := `You are an expert Kubernetes AI Assistant named "Cloud Sentinel AI". You are embedded within the Cloud Sentinel K8s Dashboard.
+	systemPrompt := `You are an expert Kubernetes AI Assistant named "Kube Sentinel AI". You are embedded within the Kube Sentinel Dashboard.
 
 **YOUR GOAL:**
 To help users manage, debug, and understand their Kubernetes clusters efficiently and accurately. You have access to the cluster state via tools.
