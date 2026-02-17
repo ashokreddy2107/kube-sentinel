@@ -43,7 +43,7 @@ export function PodTable(props: {
         header: 'Ready',
         accessor: (pod: Pod) => {
           // Optimization: getPodStatus uses a WeakMap for caching in lib/k8s.ts, so repeated calls are cheap.
-          // This avoids eager O(N) computation for all pods, making it lazy O(PageSize).
+          // This avoids eager O(Total Pods) computation for all pods, making it lazy O(Page Size) when accessing the column.
           const status = getPodStatus(pod)
           return `${status.readyContainers} / ${status.totalContainers}`
         },
