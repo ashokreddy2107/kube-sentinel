@@ -4,7 +4,6 @@ import { Pod } from 'kubernetes-types/core/v1'
 import { Link } from 'react-router-dom'
 
 import { MetricsData, PodWithMetrics } from '@/types/api'
-import { PodStatus } from '@/types/k8s'
 import { getPodStatus } from '@/lib/k8s'
 import { formatDate } from '@/lib/utils'
 
@@ -21,21 +20,6 @@ export function PodTable(props: {
   hiddenNode?: boolean
 }) {
   const { pods, isLoading } = props
-
-  // Optimization: Memoize pod status calculation to avoid repeated calls in column accessors.
-  // getPodStatus is computationally expensive (O(C) where C is container count).
-  // Without this cache, it runs 3 times per row. With cache, it runs 1 time per row.
-  const podStatusCache = useMemo(() => {
-    const cache = new Map<string, PodStatus>()
-    if (pods) {
-      pods.forEach((pod) => {
-        if (pod.metadata?.uid) {
-          cache.set(pod.metadata.uid, getPodStatus(pod))
-        }
-      })
-    }
-    return cache
-  }, [pods])
 
   // Pod table columns
   const podColumns = useMemo(
@@ -58,8 +42,9 @@ export function PodTable(props: {
       {
         header: 'Ready',
         accessor: (pod: Pod) => {
-          const status =
-            podStatusCache.get(pod.metadata?.uid || '') || getPodStatus(pod)
+          // Optimization: getPodStatus uses a WeakMap for caching in lib/k8s.ts, so repeated calls are cheap.
+          // This avoids eager O(N) computation for all pods, making it lazy O(PageSize).
+          const status = getPodStatus(pod)
           return `${status.readyContainers} / ${status.totalContainers}`
         },
         cell: (value: unknown) => value as string,
@@ -67,8 +52,7 @@ export function PodTable(props: {
       {
         header: 'Restart',
         accessor: (pod: Pod) => {
-          const status =
-            podStatusCache.get(pod.metadata?.uid || '') || getPodStatus(pod)
+          const status = getPodStatus(pod)
           return status.restartString || '0'
         },
         cell: (value: unknown) => {
@@ -84,8 +68,7 @@ export function PodTable(props: {
         accessor: (pod: Pod) => pod,
         cell: (value: unknown) => {
           const pod = value as Pod
-          const status =
-            podStatusCache.get(pod.metadata?.uid || '') || getPodStatus(pod)
+          const status = getPodStatus(pod)
           return (
             <Badge variant="outline" className="text-muted-foreground px-1.5">
               <PodStatusIcon status={status.reason} />
@@ -149,7 +132,7 @@ export function PodTable(props: {
         },
       },
     ],
-    [props.hiddenNode, podStatusCache]
+    [props.hiddenNode]
   )
 
   if (isLoading) {
