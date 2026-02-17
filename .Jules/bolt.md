@@ -5,3 +5,7 @@
 ## 2024-05-23 - Conventional Commits for PR Titles
 **Learning:** The CI pipeline enforces Conventional Commits on PR titles. Emojis at the start of the title are not valid prefixes.
 **Action:** Always use types like `feat`, `fix`, `perf`, etc., as prefixes for PR titles (e.g., `perf: optimize PodTable rendering performance`).
+
+## 2024-05-23 - Retrying Submission with New Branch
+**Learning:** Updating an existing PR's title via `submit` may not work if the tool reuses the PR.
+**Action:** Submit to a *new branch* to force a new PR with the correct title.
