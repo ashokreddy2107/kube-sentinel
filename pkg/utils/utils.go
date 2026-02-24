@@ -85,7 +85,7 @@ func GetUserGlabConfigDir(storageNamespace string) (string, error) {
 	if err := os.MkdirAll(path, 0700); err != nil {
 		return "", fmt.Errorf("failed to create glab config directory: %w", err)
 	}
-	// Explicitly chmod to ensure permissions are correct regardless of umask
+	// Explicitly chmod to ensure permissions are secure (0700) regardless of umask
 	if err := os.Chmod(path, 0700); err != nil {
 		return "", fmt.Errorf("failed to chmod glab config directory: %w", err)
 	}
@@ -114,7 +114,7 @@ func WriteUserAWSCredentials(storageNamespace string, content string) error {
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return fmt.Errorf("failed to create aws config directory: %w", err)
 	}
-	// Explicitly chmod to ensure permissions are correct regardless of umask
+	// Explicitly chmod to ensure permissions are secure (0700) regardless of umask
 	if err := os.Chmod(dir, 0700); err != nil {
 		return fmt.Errorf("failed to chmod aws config directory: %w", err)
 	}
