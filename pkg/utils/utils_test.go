@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -76,7 +78,55 @@ func TestGenerateNodeAgentName(t *testing.T) {
 	}
 }
 
-func TestGetUserGlabConfigDir(t *testing.T) {
-	// Skip execution as it requires root permissions to write to /data
-	t.Skip("Skipping execution of GetUserGlabConfigDir as it requires root permissions to write to /data")
+func TestUserCredentialsPermissions(t *testing.T) {
+	// Create a temporary directory for testing
+	tempDir := t.TempDir()
+
+	// Override DataDir for testing
+	originalDataDir := DataDir
+	DataDir = tempDir
+	defer func() { DataDir = originalDataDir }()
+
+	storageNamespace := "secure-user"
+
+	// Test GetUserGlabConfigDir permissions
+	glabDir, err := GetUserGlabConfigDir(storageNamespace)
+	if err != nil {
+		t.Fatalf("GetUserGlabConfigDir failed: %v", err)
+	}
+
+	info, err := os.Stat(glabDir)
+	if err != nil {
+		t.Fatalf("Failed to stat glab dir: %v", err)
+	}
+	mode := info.Mode().Perm()
+	if mode != 0700 {
+		t.Errorf("Glab Config Dir Permissions: got %o, want 0700", mode)
+	}
+
+	// Test WriteUserAWSCredentials permissions
+	err = WriteUserAWSCredentials(storageNamespace, "aws_access_key_id=test")
+	if err != nil {
+		t.Fatalf("WriteUserAWSCredentials failed: %v", err)
+	}
+
+	awsFile := GetUserAWSCredentialsPath(storageNamespace)
+	info, err = os.Stat(awsFile)
+	if err != nil {
+		t.Fatalf("Failed to stat aws file: %v", err)
+	}
+	mode = info.Mode().Perm()
+	if mode != 0600 {
+		t.Errorf("AWS Credentials File Permissions: got %o, want 0600", mode)
+	}
+
+	awsDir := filepath.Dir(awsFile)
+	info, err = os.Stat(awsDir)
+	if err != nil {
+		t.Fatalf("Failed to stat aws dir: %v", err)
+	}
+	mode = info.Mode().Perm()
+	if mode != 0700 {
+		t.Errorf("AWS Config Dir Permissions: got %o, want 0700", mode)
+	}
 }
