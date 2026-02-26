@@ -524,6 +524,7 @@ export function Terminal({
               size="sm"
               onClick={cycleTheme}
               title={`Current theme: ${TERMINAL_THEMES[terminalTheme].name} (Ctrl+T to cycle)`}
+              aria-label="Change terminal theme"
               className="relative"
             >
               <IconPalette className="h-4 w-4" />
@@ -538,7 +539,11 @@ export function Terminal({
             {/* Settings */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label="Terminal settings"
+                >
                   <IconSettings className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
@@ -667,11 +672,23 @@ export function Terminal({
             </Popover>
 
             {/* Clear Terminal */}
-            <Button variant="outline" size="sm" onClick={clearTerminal}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearTerminal}
+              aria-label="Clear terminal"
+            >
               <IconClearAll className="h-4 w-4" />
             </Button>
 
-            <Button variant="outline" size="sm" onClick={toggleFullscreen}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleFullscreen}
+              aria-label={
+                isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'
+              }
+            >
               {isFullscreen ? (
                 <IconMinimize className="h-4 w-4" />
               ) : (
