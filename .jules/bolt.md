@@ -1,11 +1,5 @@
-## 2026-02-13 - [Repeated Computation in Column Accessors]
-**Learning:** Table column accessors in `SimpleTable` implementations often call the same expensive helper function (e.g., `getPodStatus`) multiple times per row for different columns. This results in O(Columns * Rows) complexity instead of O(Rows).
-**Action:** Memoize expensive calculations at the row level (e.g., using a `Map` in `useMemo` keyed by object ID) before passing to the table, or ensure the helper function itself is memoized.
+# Bolt's Journal
 
-## 2026-02-13 - [Memoization of Helper Functions]
-**Learning:** When multiple components or table columns call the same expensive helper function (like `getPodStatus`) with the same object reference, memoizing the helper function itself using a `WeakMap` is a clean and effective optimization that avoids refactoring all call sites.
-**Action:** Use `WeakMap` to cache results of expensive stateless functions that take an object as input.
-
-## 2026-02-13 - [Stable Keys in Generic Tables]
-**Learning:** Generic table components (like `SimpleTable`) were using array indices as React keys (`key={rowIndex}`). This forces unnecessary re-renders of all rows when the list order changes (e.g. sorting) and can lead to incorrect state preservation.
-**Action:** Add an optional `getRowId` prop to generic table components and use stable IDs (like `metadata.uid`) as keys whenever possible.
+## 2026-02-26 - CI Failure due to PR Title
+**Learning:** The repository uses Conventional Commits for PR titles, enforced by GitHub Actions. A PR title like "⚡ Bolt: Implement route-based code splitting" fails the check because it lacks a standard type prefix (e.g., `feat`, `fix`, `perf`).
+**Action:** Always format PR titles with Conventional Commits (e.g., `perf(ui): implement route-based code splitting`) to ensure CI passes.
