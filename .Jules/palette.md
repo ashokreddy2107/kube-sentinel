@@ -9,3 +9,11 @@
 ## 2024-05-24 - [Status Indicator Accessibility]
 **Learning:** Visual-only status indicators (colored dots) are invisible to screen readers. Components like `ConnectionIndicator` must communicate state programmatically.
 **Action:** Add `role="status"` and explicit `aria-label` (e.g., "Connected", "Disconnected") to status indicator elements.
+
+## 2024-05-24 - [Conventional Commits Enforcement]
+**Learning:** The repository enforces Conventional Commits (e.g., , , ) via GitHub Actions. PR titles MUST follow this format (e.g., ) and cannot be arbitrary strings like "Palette: ...".
+**Action:** Always format PR titles as .
+
+## 2024-05-24 - [Conventional Commits Enforcement]
+**Learning:** The repository enforces Conventional Commits (e.g., `feat`, `fix`, `docs`) via GitHub Actions. PR titles MUST follow this format (e.g., `feat(ui): ...`) and cannot be arbitrary strings like "Palette: ...".
+**Action:** Always format PR titles as `type(scope): description`.
