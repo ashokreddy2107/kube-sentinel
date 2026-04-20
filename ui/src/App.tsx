@@ -1,10 +1,11 @@
 import './App.css'
 
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useSearchParams } from 'react-router-dom'
 
 import { AppSidebar } from './components/app-sidebar'
+import { Loading } from './components/loading'
 import { FloatingAIChat } from './components/floating-ai-chat'
 import { GlobalSearch } from './components/global-search'
 import {
@@ -58,7 +59,11 @@ function AppContent() {
   const isIframe = searchParams.get('iframe') === 'true'
 
   if (isIframe) {
-    return <Outlet />
+    return (
+      <Suspense fallback={<Loading />}>
+        <Outlet />
+      </Suspense>
+    )
   }
 
   return (
@@ -70,7 +75,9 @@ function AppContent() {
           <div className="@container/main">
             <div className="flex flex-col gap-4 py-4 md:gap-6">
               <div className="px-4 lg:px-6">
-                <Outlet />
+                <Suspense fallback={<Loading />}>
+                  <Outlet />
+                </Suspense>
               </div>
             </div>
           </div>
