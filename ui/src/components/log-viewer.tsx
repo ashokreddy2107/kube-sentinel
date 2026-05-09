@@ -530,6 +530,7 @@ export function LogViewer({
               size="sm"
               onClick={cycleTheme}
               title={`Current theme: ${TERMINAL_THEMES[logTheme].name}`}
+              aria-label="Change log theme"
               className="relative"
             >
               <IconPalette className="h-4 w-4" />
@@ -544,7 +545,7 @@ export function LogViewer({
             {/* Settings */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" aria-label="Log settings">
                   <IconSettings className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
@@ -718,6 +719,7 @@ export function LogViewer({
               size="sm"
               onClick={clearLogs}
               title="Clear logs"
+              aria-label="Clear logs"
             >
               <IconClearAll className="h-4 w-4" />
             </Button>
@@ -728,6 +730,7 @@ export function LogViewer({
               size="sm"
               onClick={downloadLogs}
               disabled={logCount === 0}
+              aria-label="Download logs"
             >
               <IconDownload className="h-4 w-4" />
             </Button>
@@ -740,6 +743,9 @@ export function LogViewer({
               title={
                 isFullscreen ? 'Exit fullscreen (ESC)' : 'Enter fullscreen'
               }
+              aria-label={
+                isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'
+              }
             >
               {isFullscreen ? (
                 <IconMinimize className="h-4 w-4" />
@@ -750,7 +756,12 @@ export function LogViewer({
 
             {/* Close */}
             {onClose && (
-              <Button variant="outline" size="sm" onClick={onClose}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onClose}
+                aria-label="Close log viewer"
+              >
                 <IconX className="h-4 w-4" />
               </Button>
             )}
